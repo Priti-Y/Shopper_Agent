@@ -1,0 +1,11 @@
+Create Project
+Create .env file to keep API key
+Create virtual environment
+  1. source venv/Scripts/activate
+pip install 
+    google-genai 
+    langchain 
+    crewai 
+    pydantic 
+    python-dotenv 
+    requests
