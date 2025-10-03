@@ -8,15 +8,15 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 
 from langchain.prompts import PromptTemplate
 
-prompt = PromptTemplate.from_template("""
-You are an AI assistant with access to tools.
-Always respond with either:
-- "Action: <tool_name>"
-- "Action Input: <tool input>"
-Or "Final Answer: <your answer>"
+# prompt = PromptTemplate.from_template("""
+# You are an AI assistant with access to tools.
+# Always respond with either:
+# - "Action: <tool_name>"
+# - "Action Input: <tool input>"
+# Or "Final Answer: <your answer>"
 
-Question: {input}
-""")
+# Question: {input}
+# """)
 # Initialize LLM (can use OpenAI or any supported LLM)
 llm = ChatGoogleGenerativeAI(
     model="gemini-pro-latest",
@@ -45,7 +45,7 @@ retriever_tool = Tool(
 )
 
 # Load tools
-tools = [web_search_tool, retriever_tool]  # Add more tools as needed
+tools = [retriever_tool, web_search_tool]  # Add more tools as needed
 
 # Initialize Agent
 agent = initialize_agent(
