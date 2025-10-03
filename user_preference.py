@@ -44,5 +44,5 @@ collection.add(
     ids=[f"pref{i}" for i in range(len(user_preferences))]
 )
 
-
 print("User preferences added to ChromaDB!")
+

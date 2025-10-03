@@ -1,8 +1,10 @@
+from langchain.vectorstores import Chroma
+from langchain.embeddings import SentenceTransformerEmbeddings
 from langchain.agents import initialize_agent, AgentType
-from langchain_google_genai import ChatGoogleGenerativeAI
-import os
+from langchain.tools import Tool
 from web_search import web_search_tool
-import google.generativeai as genai
+import os
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from langchain.prompts import PromptTemplate
 
@@ -24,19 +26,39 @@ llm = ChatGoogleGenerativeAI(
 #for m in genai.list_models():
 #    print(m.name, " — supports ", m.supported_generation_methods)
 
-# Load tools
-tools = [web_search_tool]
+# Embedding wrapper
+embedding_model = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
 
-# Create the agent
+# Connect to ChromaDB
+vectorstore = Chroma(
+    collection_name="user_preferences",
+    embedding_function=embedding_model,
+    persist_directory="./chromadb"
+)
+retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+
+# Tools
+retriever_tool = Tool(
+    name="PreferenceRetriever",
+    func=lambda query: retriever.get_relevant_documents(query),
+    description="Fetches user preferences for personalized shopping."
+)
+
+# Load tools
+tools = [web_search_tool, retriever_tool]  # Add more tools as needed
+
+# Initialize Agent
 agent = initialize_agent(
-    tools=tools,    
+    tools=tools,
     llm=llm,
     agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-    agent_kwargs={"prefix": prompt.template},
     verbose=True,
     handle_parsing_errors=True
 )
 
+
 if __name__ == "__main__":
-    response = agent.invoke("Find the latest iPhone 13 Pro reviews")
-    print(f"*****************************{response}")
+   # Test query
+        query = "Suggest a good handbag"
+        response = agent.invoke(query)
+        print(response)
