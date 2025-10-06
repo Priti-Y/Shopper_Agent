@@ -7,6 +7,7 @@ import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from langchain.prompts import PromptTemplate
+ # Import user preferences from the other file
 
 # prompt = PromptTemplate.from_template("""
 # You are an AI assistant with access to tools.
@@ -33,8 +34,18 @@ embedding_model = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
 vectorstore = Chroma(
     collection_name="user_preferences",
     embedding_function=embedding_model,
-    persist_directory="./chromadb"
+    persist_directory="./chroma_db"
 )
+
+print(vectorstore._collection.name)
+# Get count of stored items
+try:
+    count = len(vectorstore.get())
+    print(f"✅ Number of stored preference documents: {count}")
+except Exception as e:
+    print("❌ Could not read from ChromaDB:", e)
+
+    
 retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
 # Tools

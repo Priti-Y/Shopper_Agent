@@ -2,7 +2,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 import chromadb
 
-
+# Sample preferences
 user_preferences = [
     "User likes leather goods such as bags, belts, and wallets.",
     "Prefers products under a strict budget of $100.",
@@ -14,35 +14,31 @@ user_preferences = [
     "User has shown interest in luxury watches but prefers discounts.",
     "Interested in reading reviews before making a purchase.",
     "Likes to stay updated with the latest fashion trends.",
-    "Intrested in fitness and wellness products."
+    "Interested in fitness and wellness products."
 ]
 
-text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=200,  # ~200 characters per chunk
-    chunk_overlap=20
-)
-
+# Optional splitting (if texts are long)
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=20)
 chunks = text_splitter.split_text(" ".join(user_preferences))
-print(chunks)
+print(f"✅ Created {len(chunks)} text chunks.")
 
+# Initialize persistent Chroma client
+client = chromadb.PersistentClient(path="./chroma_db")
 
-# Initialize Chroma
-client = chromadb.Client()
-collection = client.create_collection(name="user_preferences")
+# Create (or get existing) collection
+collection = client.get_or_create_collection(name="user_preferences")
 
 # Embedding model
 embedder = SentenceTransformer("all-MiniLM-L6-v2")
 
 # Create embeddings
-embeddings = embedder.encode(user_preferences).tolist()
-print(embeddings)
+embeddings = embedder.encode(chunks).tolist()
 
 # Add to Chroma
 collection.add(
-    documents=user_preferences,
+    documents=chunks,
     embeddings=embeddings,
-    ids=[f"pref{i}" for i in range(len(user_preferences))]
+    ids=[f"pref_{i}" for i in range(len(chunks))]
 )
 
-print("User preferences added to ChromaDB!")
-
+print("✅ User preferences added to ChromaDB!")
