@@ -73,8 +73,8 @@ if __name__ == "__main__":
 #         response = agent.invoke(query)
 #         print("\n💡 Final Personalized Response:")
 #         print(response)
-        urls = ["https://example.com/product1", "https://example.com/product2"]
-        for url in urls:
-          print(product_scraper_tool(url))
+      
+          print(product_scraper_tool({"url_list": ["https://example.com/product1",
+        "https://example.com/product2"]}))
     
       
