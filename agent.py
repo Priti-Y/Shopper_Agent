@@ -3,21 +3,11 @@ from langchain.embeddings import SentenceTransformerEmbeddings
 from langchain.agents import initialize_agent, AgentType
 from langchain.tools import Tool
 from web_search import web_search_tool
+from product_scraper import product_scraper_tool
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
+from memory_manager import add_new_memory, get_all_memories
 
-from langchain.prompts import PromptTemplate
- # Import user preferences from the other file
-
-# prompt = PromptTemplate.from_template("""
-# You are an AI assistant with access to tools.
-# Always respond with either:
-# - "Action: <tool_name>"
-# - "Action Input: <tool input>"
-# Or "Final Answer: <your answer>"
-
-# Question: {input}
-# """)
 # Initialize LLM (can use OpenAI or any supported LLM)
 llm = ChatGoogleGenerativeAI(
     model="gemini-pro-latest",
@@ -41,9 +31,9 @@ print(vectorstore._collection.name)
 # Get count of stored items
 try:
     count = len(vectorstore.get())
-    print(f"✅ Number of stored preference documents: {count}")
+    print(f"Number of stored preference documents: {count}")
 except Exception as e:
-    print("❌ Could not read from ChromaDB:", e)
+    print("Could not read from ChromaDB:", e)
 
     
 retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
@@ -56,7 +46,7 @@ retriever_tool = Tool(
 )
 
 # Load tools
-tools = [retriever_tool, web_search_tool]  # Add more tools as needed
+tools = [retriever_tool, web_search_tool,product_scraper_tool]  # Add more tools as needed
 
 # Initialize Agent
 agent = initialize_agent(
@@ -67,9 +57,24 @@ agent = initialize_agent(
     handle_parsing_errors=True
 )
 
-
 if __name__ == "__main__":
-   # Test query
-        query = "Suggest a good handbag"
-        response = agent.invoke(query)
-        print(response)
+#    # Test query
+#         query = "Suggest a good handbag"
+
+#         # Example: Add a new memory based on user feedback
+#         add_new_memory("User prefers brown leather goods for wallets and belts.")
+
+#         # Optional: print all stored memories to verify
+#         print("\n📦 Current stored preferences:")
+#         for mem in get_all_memories():
+#             print("-", mem)
+
+
+#         response = agent.invoke(query)
+#         print("\n💡 Final Personalized Response:")
+#         print(response)
+        urls = ["https://example.com/product1", "https://example.com/product2"]
+        for url in urls:
+          print(product_scraper_tool(url))
+    
+      
