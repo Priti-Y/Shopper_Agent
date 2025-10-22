@@ -1,7 +1,7 @@
 from langchain.tools import tool
 import random
 
-@tool("product_scraper_tool", return_direct=True)
+@tool("product_scraper", return_direct=True)
 def product_scraper_tool(url_list: list):
     """
     Takes a list of product URLs and returns mock product details like specs and reviews.
@@ -18,7 +18,7 @@ def product_scraper_tool(url_list: list):
         "Good value for money, but packaging could improve.",
         "Stylish design, perfect for daily use."
     ]
-    print(f"***************************{url_list}")
+
     results = []
     for url in url_list:
         results.append({

@@ -4,9 +4,16 @@ from langchain.agents import initialize_agent, AgentType
 from langchain.tools import Tool
 from web_search import web_search_tool
 from product_scraper import product_scraper_tool
-import os
+import os, sys
+
+print("Current working directory:", os.getcwd())
+
 from langchain_google_genai import ChatGoogleGenerativeAI
 from memory_manager import add_new_memory, get_all_memories
+from review_synthesis_tool import review_synthesis_tool
+
+
+sys.path.append(os.path.dirname(__file__))
 
 # Initialize LLM (can use OpenAI or any supported LLM)
 llm = ChatGoogleGenerativeAI(
@@ -46,7 +53,7 @@ retriever_tool = Tool(
 )
 
 # Load tools
-tools = [retriever_tool, web_search_tool,product_scraper_tool]  # Add more tools as needed
+tools = [retriever_tool, web_search_tool,product_scraper_tool,review_synthesis_tool]  # Add more tools as needed
 
 # Initialize Agent
 agent = initialize_agent(
@@ -73,8 +80,16 @@ if __name__ == "__main__":
 #         response = agent.invoke(query)
 #         print("\n💡 Final Personalized Response:")
 #         print(response)
-      
-          print(product_scraper_tool({"url_list": ["https://example.com/product1",
-        "https://example.com/product2"]}))
+        #   urls = ["https://example.com/product1", "https://example.com/product2"]
+        #   print(product_scraper_tool({"url_list": urls}))
     
-      
+            reviews = [
+                "The battery life is great but it takes long to charge.",
+                "Excellent performance, but heating issue sometimes.",
+                "Display is crisp, battery drains fast.",
+            ]
+    
+   
+            response = agent.run({"Summarize reviews": reviews})
+
+            print(response)
