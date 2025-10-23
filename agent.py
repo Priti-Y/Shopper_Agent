@@ -63,49 +63,7 @@ agent = initialize_agent(
 )
 
 if __name__ == "__main__":
-#    # Test query
-#         query = "Suggest a good handbag"
-
-#         # Example: Add a new memory based on user feedback
-#         add_new_memory("User prefers brown leather goods for wallets and belts.")
-
-#         # Optional: print all stored memories to verify
-#         print("\n📦 Current stored preferences:")
-#         for mem in get_all_memories():
-#             print("-", mem)
-
-
-#         response = agent.invoke(query)
-#         print("\n💡 Final Personalized Response:")
-#         print(response)
-        #   urls = ["https://example.com/product1", "https://example.com/product2"]
-        #   print(product_scraper_tool({"url_list": urls}))
-    
-            # reviews = [
-            #     "The battery life is great but it takes long to charge.",
-            #     "Excellent performance, but heating issue sometimes.",
-            #     "Display is crisp, battery drains fast.",
-            # ]
-
-            # # The StructuredTool expects a dict matching the args_schema (MultiReviewInput),
-            # # not a bare list. Pass a dict with the key 'reviews' or a Pydantic model instance.
-            # # Incorrect: review_synthesis_tool(reviews)  -> raises ValidationError
-            # # Correct (direct tool call):
-            # # tool_response = review_synthesis_tool({"reviews": reviews})
-            # # print("Tool response:\n", tool_response)
-
-            # # If you prefer to invoke the agent (it will route to the tool), use the agent.invoke
-            # # call with the agent's expected input format. Example (kept commented):
-            # response = agent.invoke({"input": {"reviews": reviews}})
-            # print(response)
-
-            example_product = product_comparison_tool(
-                product_name="iPhone 13 Pro",
-                price=999.99,
-                battery_life="Up to 22 hours talk time",
-                pros_summary=["Excellent camera", "Smooth ProMotion display", "Strong performance"],
-                cons_summary=["Expensive", "No major design changes"]
-            )
-
-            # Use Pydantic v2 method
-            print(example_product.model_dump_json(indent=2))
+    query = "Find me a new smartphone"
+    # The output of web_search automatically goes to product_scraper, then to review_synthesis
+    response = agent.run({"input": query})
+    print(response)
