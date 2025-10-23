@@ -2,13 +2,11 @@ from langchain.vectorstores import Chroma
 from langchain.embeddings import SentenceTransformerEmbeddings
 from langchain.agents import initialize_agent, AgentType
 from langchain.tools import Tool
+from langchain_google_genai import ChatGoogleGenerativeAI
 from web_search import web_search_tool
 from product_scraper import product_scraper_tool
 import os, sys
-
-print("Current working directory:", os.getcwd())
-
-from langchain_google_genai import ChatGoogleGenerativeAI
+from product_tool import product_comparison_agent_tool, product_comparison_tool
 from memory_manager import add_new_memory, get_all_memories
 from review_synthesis_tool import review_synthesis_tool
 
@@ -53,7 +51,7 @@ retriever_tool = Tool(
 )
 
 # Load tools
-tools = [retriever_tool, web_search_tool,product_scraper_tool,review_synthesis_tool]  # Add more tools as needed
+tools = [retriever_tool, web_search_tool, product_scraper_tool, review_synthesis_tool, product_comparison_agent_tool]  # Add more tools as needed
 
 # Initialize Agent
 agent = initialize_agent(
@@ -83,20 +81,31 @@ if __name__ == "__main__":
         #   urls = ["https://example.com/product1", "https://example.com/product2"]
         #   print(product_scraper_tool({"url_list": urls}))
     
-            reviews = [
-                "The battery life is great but it takes long to charge.",
-                "Excellent performance, but heating issue sometimes.",
-                "Display is crisp, battery drains fast.",
-            ]
+            # reviews = [
+            #     "The battery life is great but it takes long to charge.",
+            #     "Excellent performance, but heating issue sometimes.",
+            #     "Display is crisp, battery drains fast.",
+            # ]
 
-            # The StructuredTool expects a dict matching the args_schema (MultiReviewInput),
-            # not a bare list. Pass a dict with the key 'reviews' or a Pydantic model instance.
-            # Incorrect: review_synthesis_tool(reviews)  -> raises ValidationError
-            # Correct (direct tool call):
-            tool_response = review_synthesis_tool({"reviews": reviews})
-            print("Tool response:\n", tool_response)
+            # # The StructuredTool expects a dict matching the args_schema (MultiReviewInput),
+            # # not a bare list. Pass a dict with the key 'reviews' or a Pydantic model instance.
+            # # Incorrect: review_synthesis_tool(reviews)  -> raises ValidationError
+            # # Correct (direct tool call):
+            # # tool_response = review_synthesis_tool({"reviews": reviews})
+            # # print("Tool response:\n", tool_response)
 
-            # If you prefer to invoke the agent (it will route to the tool), use the agent.invoke
-            # call with the agent's expected input format. Example (kept commented):
+            # # If you prefer to invoke the agent (it will route to the tool), use the agent.invoke
+            # # call with the agent's expected input format. Example (kept commented):
             # response = agent.invoke({"input": {"reviews": reviews}})
             # print(response)
+
+            example_product = product_comparison_tool(
+                product_name="iPhone 13 Pro",
+                price=999.99,
+                battery_life="Up to 22 hours talk time",
+                pros_summary=["Excellent camera", "Smooth ProMotion display", "Strong performance"],
+                cons_summary=["Expensive", "No major design changes"]
+            )
+
+            # Use Pydantic v2 method
+            print(example_product.model_dump_json(indent=2))
