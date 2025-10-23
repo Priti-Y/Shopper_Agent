@@ -88,8 +88,15 @@ if __name__ == "__main__":
                 "Excellent performance, but heating issue sometimes.",
                 "Display is crisp, battery drains fast.",
             ]
-    
-   
-            response = agent.run({"Summarize reviews": reviews})
 
-            print(response)
+            # The StructuredTool expects a dict matching the args_schema (MultiReviewInput),
+            # not a bare list. Pass a dict with the key 'reviews' or a Pydantic model instance.
+            # Incorrect: review_synthesis_tool(reviews)  -> raises ValidationError
+            # Correct (direct tool call):
+            tool_response = review_synthesis_tool({"reviews": reviews})
+            print("Tool response:\n", tool_response)
+
+            # If you prefer to invoke the agent (it will route to the tool), use the agent.invoke
+            # call with the agent's expected input format. Example (kept commented):
+            # response = agent.invoke({"input": {"reviews": reviews}})
+            # print(response)
