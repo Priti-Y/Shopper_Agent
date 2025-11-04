@@ -32,16 +32,34 @@ def web_search_tool(query: str) -> str:
     }
 
     search = GoogleSearch(params)
-    results = search.get_dict()
-    #print(results) #immersive_products
-    organic_results = results["organic_results"]
-    #prod_results = results["immersive_products"]
+    results = search.get_dict() or {}
+    # print(results) # debug
+
+    # organic_results may not always be present depending on SerpAPI response or errors.
+    organic_results = results.get("organic_results") or []
 
     output = []
-    for r in organic_results:
-        #append only title and link from results
-        output.append(f"{r.get('title')} — {r.get('link')}")
-    
+    if isinstance(organic_results, list) and organic_results:
+        for r in organic_results:
+            # append only title and link from results (guarding missing keys)
+            title = r.get("title") or r.get("position") or "(no title)"
+            link = r.get("link") or r.get("url") or "(no link)"
+            output.append(f"{title} — {link}")
+    else:
+        # Fallback: try to extract from other common fields if organic_results absent
+        # e.g., answer_box, knowledge_graph, or top_result
+        if isinstance(results, dict):
+            # try answer box
+            ab = results.get("answer_box") or results.get("top_result") or {}
+            title = None
+            link = None
+            if isinstance(ab, dict):
+                title = ab.get("title") or ab.get("snippet")
+                link = ab.get("link") or ab.get("url")
+            if title or link:
+                output.append(f"{title or '(no title)'} — {link or '(no link)'}")
+
+    print("Search results:", output)
     return "\n".join(output[:3])
 
 

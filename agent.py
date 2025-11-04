@@ -63,7 +63,7 @@ agent = initialize_agent(
 )
 
 if __name__ == "__main__":
-    query = "Find me a new smartphone"
+    query = "Find me a new smart watch under 400$"
     # The output of web_search automatically goes to product_scraper, then to review_synthesis
     response = agent.run({"input": query})
     print(response)

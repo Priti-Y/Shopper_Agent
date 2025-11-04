@@ -2,11 +2,13 @@ from langchain.tools import StructuredTool
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from langchain.prompts import ChatPromptTemplate, PromptTemplate
+from typing import List
 import json
 
 # Step 1: Define input model
 class MultiReviewInput(BaseModel):
-    reviews: list[str] = Field(..., description="A list of unstructured review texts to analyze")
+    # Use typing.List for broader compatibility with pydantic/langchain parsing
+    reviews: List[str] = Field(..., description="A list of unstructured review texts to analyze")
 
 # Step 2: Define the system prompt
 multi_review_prompt = """
