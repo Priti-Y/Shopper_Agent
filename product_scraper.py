@@ -115,7 +115,7 @@ def product_scraper_tool(url_list: list | str):
         try:
             resp = requests.get(url, headers=headers, timeout=15)
             if resp.status_code != 200:
-                results.append({"url": url, "error": f"HTTP {resp.status_code}"})
+                results.append({"url": url, "error": f"HTTP {resp.status_code}", "status": "error"})
                 continue
 
             soup = BeautifulSoup(resp.text, "html.parser")
@@ -127,15 +127,40 @@ def product_scraper_tool(url_list: list | str):
             else:
                 specs, reviews = scrape_generic(soup)
 
-            results.append({
-                "url": url,
-                "specs": specs,
-                "reviews": reviews if reviews else ["No reviews found."]
-            })
+            # Normalize reviews
+            normalized_reviews = reviews if reviews else ["No reviews found."]
+
+            # Detect empty or unhelpful specs (e.g., only N/A title and no other specs)
+            def _is_specs_empty(s):
+                if not s:
+                    return True
+                # If the only key is Product Title and it's N/A or empty, consider empty
+                keys = list(s.keys())
+                if len(keys) == 1 and keys[0] == "Product Title":
+                    val = s.get("Product Title")
+                    if not val or str(val).strip().upper() == "N/A":
+                        return True
+                # Otherwise consider non-empty
+                return False
+
+            if _is_specs_empty(specs) and (not normalized_reviews or normalized_reviews == ["No reviews found."]):
+                results.append({
+                    "url": url,
+                    "status": "error",
+                    "error": "No product details or reviews could be extracted from the page."
+                })
+            else:
+                results.append({
+                    "url": url,
+                    "status": "ok",
+                    "specs": specs,
+                    "reviews": normalized_reviews
+                })
 
         except Exception as e:
             results.append({
                 "url": url,
+                "status": "error",
                 "error": str(e)
             })
 

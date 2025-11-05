@@ -51,6 +51,21 @@ def _agent_wrapper(input_str: str) -> str:
     except Exception:
         return json.dumps({"error": "Invalid input. Provide a JSON string with keys: product_name, price, battery_life, pros_summary, cons_summary"})
 
+    # If the input is a scraper result, it may contain error/status fields — propagate those clearly
+    if isinstance(data, dict) and (data.get("status") == "error" or data.get("error")):
+        err = data.get("error") or "Scraper returned an error or empty result."
+        return json.dumps({"error": f"Source scraping error: {err}"})
+
+    # Basic validation before attempting to create the ProductComparison
+    required_keys = {"product_name", "price", "battery_life", "pros_summary", "cons_summary"}
+    if not required_keys.issubset(set(data.keys())):
+        missing = required_keys - set(data.keys())
+        return json.dumps({"error": f"Missing required fields: {', '.join(sorted(missing))}"})
+
+    # Handle obvious empty/placeholder values
+    if not data.get("product_name") or str(data.get("product_name")).strip().upper() == "N/A":
+        return json.dumps({"error": "Invalid product_name: no product title available from scraper."})
+
     try:
         pc = create_product_comparison(**data)
         return pc.json()
