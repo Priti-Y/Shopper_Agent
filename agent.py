@@ -62,8 +62,63 @@ agent = initialize_agent(
     handle_parsing_errors=True
 )
 
+def run_rag_agent(query: str, k: int = 3) -> str:
+    """Orchestrator that combines RAG retrieval with the existing multi-step agent.
+
+    Steps:
+    1. Use the Chroma retriever to fetch top-k documents relevant to `query`.
+    2. Create a compact context summary from those documents.
+    3. Call the initialized agent with the augmented prompt (context + user query).
+
+    Returns the agent response string. Errors and empty retrievals are handled gracefully.
+    """
+    try:
+        # fetch docs (respect the requested k)
+        docs = retriever.get_relevant_documents(query)
+    except Exception as e:
+        # Retriever failed — fall back to running the agent without context
+        print(f"Retriever error: {e}")
+        try:
+            return agent.run({"input": query})
+        except Exception as agent_e:
+            return f"Both retriever and agent failed: retriever={e}; agent={agent_e}"
+
+    # Build compact context
+    if not docs:
+        context = ""  # no retrieved context
+    else:
+        # Keep each doc short: include source (if available) and first 300 characters
+        ctx_items = []
+        for d in docs[:k]:
+            src = None
+            try:
+                src = d.metadata.get("source") if isinstance(d.metadata, dict) else None
+            except Exception:
+                src = None
+            snippet = (d.page_content[:300] + "...") if len(d.page_content) > 300 else d.page_content
+            if src:
+                ctx_items.append(f"Source: {src}\n{snippet}")
+            else:
+                ctx_items.append(snippet)
+        context = "\n\n".join(ctx_items)
+
+    # Compose an augmented prompt for the agent
+    if context:
+        augmented = (
+            "Retrieved context (top documents):\n" + context + "\n\n" +
+            "User question:\n" + query + "\n\n" +
+            "Please use the retrieved context when helpful, and call tools as needed to complete multi-step actions."
+        )
+    else:
+        augmented = query
+
+    try:
+        return agent.run({"input": augmented})
+    except Exception as e:
+        return f"Agent execution failed: {e}"
+
 if __name__ == "__main__":
     query = "Compare the top three noise-canceling headphones and summarize their user reviews"
-    # The output of web_search automatically goes to product_scraper, then to review_synthesis
-    response = agent.run({"input": query})
+    # Use the RAG + multi-step agent executor
+    response = run_rag_agent(query)
     print(response)
