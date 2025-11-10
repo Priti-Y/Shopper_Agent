@@ -13,6 +13,7 @@ chromadb>=0.4.0
 
 # Embedding models
 sentence-transformers>=2.2.2
+pandas>=1.5.0
 
 # Web search API (SerpAPI)
 serpapi>=0.3.0

@@ -1,6 +1,8 @@
 import streamlit as st
 from typing import Optional
 import json
+import pandas as pd
+from decimal import Decimal
 
 st.set_page_config(page_title="Shopper Agent — Demo", layout="wide")
 
@@ -48,27 +50,43 @@ def _display_product_comparison_obj(obj):
     cons = obj.get("cons_summary") or obj.get("cons") or []
 
     st.subheader(name if name else "Product")
-    col1, col2 = st.columns([2, 3])
-    with col1:
-        info = {}
-        if price is not None:
-            info["Price"] = price
-        if battery:
-            info["Battery life"] = battery
-        if info:
-            st.table(info.items())
-        else:
-            st.write("No basic spec fields available.")
 
-    with col2:
-        st.markdown("**Pros**")
+    # Show key metrics
+    mcol1, mcol2, mcol3 = st.columns(3)
+    # Format price if numeric
+    def _format_price(p):
+        try:
+            # handle strings like "$199" or numbers
+            if p is None:
+                return "N/A"
+            if isinstance(p, (int, float, Decimal)):
+                return f"${p:,.2f}"
+            # try parseable numeric string
+            s = str(p).strip()
+            s2 = s.replace("$", "").replace(",", "")
+            v = float(s2)
+            return f"${v:,.2f}"
+        except Exception:
+            return str(p)
+
+    with mcol1:
+        st.metric("Price", _format_price(price))
+    with mcol2:
+        st.metric("Battery life", battery or "N/A")
+    with mcol3:
+        st.metric("Pros", len(pros) if pros else 0)
+
+    # Pros / Cons columns
+    pcol, ccol = st.columns(2)
+    with pcol:
+        st.markdown("### Pros")
         if pros:
             for p in pros:
                 st.markdown(f"- {p}")
         else:
             st.markdown("- None reported")
-
-        st.markdown("**Cons**")
+    with ccol:
+        st.markdown("### Cons")
         if cons:
             for c in cons:
                 st.markdown(f"- {c}")
@@ -109,10 +127,34 @@ if st.session_state.get('last_response'):
                     "cons_summary": "; ".join(p.get("cons_summary") or p.get("cons") or [])
                 })
             st.subheader("Comparison table")
-            st.table(rows)
+            # Build DataFrame for nicer formatting
+            df = pd.DataFrame(rows)
+
+            # Format price if possible
+            def _fmt_price_col(x):
+                try:
+                    if x is None:
+                        return "N/A"
+                    if isinstance(x, (int, float, Decimal)):
+                        return f"${x:,.2f}"
+                    s = str(x).strip().replace("$", "").replace(",", "")
+                    v = float(s)
+                    return f"${v:,.2f}"
+                except Exception:
+                    return str(x)
+
+            if "price" in df.columns:
+                df["price"] = df["price"].apply(_fmt_price_col)
+
+            # Shorten pros/cons columns for table view
+            df["pros_summary"] = df["pros_summary"].apply(lambda s: (s[:140] + "...") if isinstance(s, str) and len(s) > 140 else s)
+            df["cons_summary"] = df["cons_summary"].apply(lambda s: (s[:140] + "...") if isinstance(s, str) and len(s) > 140 else s)
+
+            st.dataframe(df, use_container_width=True)
 
             for i, p in enumerate(parsed):
-                with st.expander(f"Details — {rows[i].get('product_name') or 'product ' + str(i+1)}"):
+                title = df.iloc[i].get('product_name') or f"product {i+1}"
+                with st.expander(f"Details — {title}"):
                     _display_product_comparison_obj(p)
         else:
             st.subheader("Parsed JSON")
